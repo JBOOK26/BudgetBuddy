@@ -1,98 +1,227 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LineChart, PieChart } from 'react-native-chart-kit';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { db } from '../../constants/firebaseConfig';
+import { useAppTheme } from '@/hooks/use-app-theme';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const CATEGORY_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#8BC34A', '#BA68C8'];
 
-export default function HomeScreen() {
+type Transaction = {
+  id: string;
+  type: 'income' | 'expense';
+  category: string;
+  amount: number;
+};
+
+export default function DashboardScreen() {
+  const insets = useSafeAreaInsets();
+  const chartWidth = Dimensions.get('window').width - 44;
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { resolvedTheme, toggleTheme } = useAppTheme();
+  const isDark = resolvedTheme === 'dark';
+
+  useEffect(() => {
+    const transactionsQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
+      const data = snapshot.docs.map((item) => {
+        const docData = item.data() as Omit<Transaction, 'id'>;
+        return {
+          id: item.id,
+          ...docData,
+        };
+      });
+      setTransactions(data);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  const totalIncome = transactions
+    .filter((t) => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = transactions
+    .filter((t) => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const balance = totalIncome - totalExpenses;
+  const spendingRate = Math.min((totalExpenses / Math.max(totalIncome, 1)) * 100, 100);
+
+  const expenseByCategory = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.type === 'expense')
+        .reduce<Record<string, number>>((acc, transaction) => {
+          acc[transaction.category] = (acc[transaction.category] ?? 0) + transaction.amount;
+          return acc;
+        }, {}),
+    [transactions]
+  );
+
+  const wheelData = useMemo(() => {
+    const values = Object.entries(expenseByCategory).map(([category, amount], index) => ({
+      name: category,
+      amount,
+      color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      legendFontColor: '#444',
+      legendFontSize: 12,
+    }));
+
+    if (values.length === 0) {
+      return [
+        {
+          name: 'No data',
+          amount: 1,
+          color: '#D0D0D0',
+          legendFontColor: '#666',
+          legendFontSize: 12,
+        },
+      ];
+    }
+
+    return values;
+  }, [expenseByCategory]);
+
+  const trendData = {
+    labels: ['W1', 'W2', 'W3', 'W4'],
+    datasets: [
+      {
+        data: [900, 1200, 1100, totalExpenses],
+        color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
+        strokeWidth: 3,
+      },
+    ],
+  };
+
+  const chartConfig = {
+    backgroundGradientFrom: isDark ? '#202225' : '#ffffff',
+    backgroundGradientTo: isDark ? '#202225' : '#ffffff',
+    decimalPlaces: 0,
+    color: (opacity = 1) => `rgba(${isDark ? '230,230,230' : '51,51,51'}, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(${isDark ? '230,230,230' : '51,51,51'}, ${opacity})`,
+    propsForBackgroundLines: {
+      strokeDasharray: '',
+      stroke: isDark ? '#3b3f45' : '#ececec',
+    },
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: isDark ? '#121212' : '#f5f5f5' }]}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top + 12 }]}
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.headingRow}>
+        <Text style={[styles.heading, { color: isDark ? '#f4f4f4' : '#111' }]}>Budget Buddy</Text>
+        <Pressable
+          onPress={toggleTheme}
+          style={[
+            styles.toggleButton,
+            { backgroundColor: isDark ? '#2a2d31' : '#e9f0ec', borderColor: isDark ? '#3d4248' : '#d3e2da' },
+          ]}>
+          <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={18} color={isDark ? '#f7d66b' : '#223'} />
+          <Text style={[styles.toggleLabel, { color: isDark ? '#f4f4f4' : '#111' }]}>
+            {isDark ? 'Light' : 'Dark'}
+          </Text>
+        </Pressable>
+      </View>
+      <View style={[styles.card, styles.incomeCard]}>
+        <Text style={styles.label}>Income</Text>
+        <Text style={styles.value}>PHP {totalIncome.toLocaleString()}</Text>
+      </View>
+      <View style={[styles.card, styles.expenseCard]}>
+        <Text style={styles.label}>Expenses</Text>
+        <Text style={styles.value}>PHP {totalExpenses.toLocaleString()}</Text>
+      </View>
+      <View style={[styles.card, balance >= 0 ? styles.balanceCard : styles.negativeCard]}>
+        <Text style={styles.label}>Balance</Text>
+        <Text style={styles.value}>PHP {balance.toLocaleString()}</Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={[styles.chartCard, { backgroundColor: isDark ? '#202225' : '#fff' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f4' : '#222' }]}>Budget Wheel</Text>
+        <Text style={[styles.sectionSubtitle, { color: isDark ? '#c6c6c6' : '#666' }]}>
+          {spendingRate.toFixed(0)}% of income used
+        </Text>
+        <PieChart
+          data={wheelData}
+          width={chartWidth}
+          height={180}
+          accessor="amount"
+          chartConfig={chartConfig}
+          backgroundColor="transparent"
+          paddingLeft="14"
+          hasLegend
+          absolute
+          center={[10, 0]}
+        />
+      </View>
+
+      <View style={[styles.chartCard, { backgroundColor: isDark ? '#202225' : '#fff' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f4' : '#222' }]}>Spending Trend</Text>
+        <LineChart
+          data={trendData}
+          width={chartWidth}
+          height={210}
+          chartConfig={chartConfig}
+          bezier
+          withShadow={false}
+          style={styles.lineChart}
+        />
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  screen: { flex: 1 },
+  container: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
+  headingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  heading: { fontSize: 28, fontWeight: '700' },
+  toggleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  toggleLabel: { fontSize: 12, fontWeight: '700' },
+  card: { borderRadius: 12, padding: 16 },
+  incomeCard: { backgroundColor: '#4CAF50' },
+  expenseCard: { backgroundColor: '#f44336' },
+  balanceCard: { backgroundColor: '#2196F3' },
+  negativeCard: { backgroundColor: '#FF5722' },
+  label: { color: '#fff', fontSize: 14, marginBottom: 6 },
+  value: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  chartCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    marginTop: 2,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222',
+    marginBottom: 4,
+    paddingHorizontal: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 6,
+    paddingHorizontal: 8,
+  },
+  lineChart: {
+    marginLeft: -8,
+    borderRadius: 12,
   },
 });
