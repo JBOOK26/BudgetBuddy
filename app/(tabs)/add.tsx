@@ -4,14 +4,12 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { db } from '../../constants/firebaseConfig';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { useAuth } from '@/contexts/AuthContext';
 
 const categories = ['Food', 'Transport', 'Bills', 'Salary', 'Freelance', 'Shopping', 'Health', 'Other'];
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const { resolvedTheme } = useAppTheme();
-  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [amount, setAmount] = useState('');
@@ -34,7 +32,6 @@ export default function AddScreen() {
         description: description.trim(),
         date: new Date().toISOString().split('T')[0],
         createdAt: serverTimestamp(),
-        userId: user?.uid,
       });
 
       Alert.alert('Saved', `${type} - PHP ${amount} - ${category}`);
