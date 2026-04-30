@@ -2,7 +2,7 @@ import { useAppTheme } from '@/hooks/use-app-theme';
 import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LineChart, PieChart } from 'react-native-chart-kit';
+import { PieChart } from 'react-native-chart-kit';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { db } from '../../constants/firebaseConfig';
 
@@ -83,47 +83,6 @@ export default function DashboardScreen() {
     return values;
   }, [expenseByCategory]);
 
-  const weeklyTrendData = useMemo(() => {
-    const now = new Date();
-    const weeks = [3, 2, 1, 0]; // Past 3 weeks + current week
-    const weeklyExpenses: number[] = [];
-    
-    weeks.forEach((weeksAgo) => {
-      const weekStart = new Date(now);
-      weekStart.setDate(weekStart.getDate() - (weekStart.getDay() || 7) - weeksAgo * 7);
-      weekStart.setHours(0, 0, 0, 0);
-      
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-      
-      const weekExpenses = transactions
-        .filter((t) => {
-          if (t.type !== 'expense' || !t.date) return false;
-          // Parse date correctly in local timezone, not UTC
-          const [year, month, day] = t.date.split('-').map(Number);
-          const transDate = new Date(year, month - 1, day, 0, 0, 0);
-          return transDate >= weekStart && transDate <= weekEnd;
-        })
-        .reduce((sum, t) => sum + t.amount, 0);
-      
-      weeklyExpenses.push(weekExpenses);
-    });
-    
-    return weeklyExpenses;
-  }, [transactions]);
-
-  const trendData = {
-    labels: ['W1', 'W2', 'W3', 'W4'],
-    datasets: [
-      {
-        data: weeklyTrendData,
-        color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
-        strokeWidth: 3,
-      },
-    ],
-  };
-
   const chartConfig = {
     backgroundGradientFrom: isDark ? '#202225' : '#ffffff',
     backgroundGradientTo: isDark ? '#202225' : '#ffffff',
@@ -173,19 +132,6 @@ export default function DashboardScreen() {
           hasLegend
           absolute
           center={[10, 0]}
-        />
-      </View>
-
-      <View style={[styles.chartCard, { backgroundColor: isDark ? '#202225' : '#fff' }]}>
-        <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f4' : '#222' }]}>Spending Trend</Text>
-        <LineChart
-          data={trendData}
-          width={chartWidth}
-          height={210}
-          chartConfig={chartConfig}
-          bezier
-          withShadow={false}
-          style={styles.lineChart}
         />
       </View>
     </ScrollView>

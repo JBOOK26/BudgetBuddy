@@ -37,8 +37,7 @@ export default function AboutScreen() {
           common problem — not knowing where your money goes.
         </Text>
         <Text style={[styles.paragraph, { color: isDark ? '#d0d6d3' : '#3d4f4d' }]}>
-          With Budget Buddy, you can easily log your daily income and expenses, organize them by category, and visualize
-          your spending through interactive charts. Everything is saved in real time using Firebase Firestore, so your data
+          With Budget Buddy, you can easily log your daily income and expenses and organize them by category. Everything is saved in real time using Firebase Firestore, so your data
           is always up to date and never lost.
         </Text>
         <Text style={[styles.paragraph, { color: isDark ? '#d0d6d3' : '#3d4f4d' }]}>
