@@ -116,9 +116,9 @@ export default function DashboardScreen() {
         <Text style={styles.value}>PHP {balance.toLocaleString()}</Text>
       </View>
 
-      <View style={[styles.chartCard, { backgroundColor: isDark ? '#202225' : '#fff' }]}>
+      <View style={[styles.chartCard, { backgroundColor: isDark ? '#1e2124' : '#fff' }]}>
         <Text style={[styles.sectionTitle, { color: isDark ? '#f4f4f4' : '#222' }]}>Budget Wheel</Text>
-        <Text style={[styles.sectionSubtitle, { color: isDark ? '#c6c6c6' : '#666' }]}>
+        <Text style={[styles.sectionSubtitle, { color: isDark ? '#aaa' : '#666' }]}>
           {spendingRate.toFixed(0)}% of income used
         </Text>
         <PieChart
@@ -140,40 +140,46 @@ export default function DashboardScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  container: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
+  container: { paddingHorizontal: 16, paddingBottom: 32, gap: 16 },
   headingRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 16,
+    paddingTop: 8,
   },
   heading: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
-  card: { borderRadius: 12, padding: 16 },
+  card: { borderRadius: 14, padding: 18, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2 },
   incomeCard: { backgroundColor: '#4CAF50' },
   expenseCard: { backgroundColor: '#f44336' },
   balanceCard: { backgroundColor: '#2196F3' },
   negativeCard: { backgroundColor: '#FF5722' },
-  label: { color: '#fff', fontSize: 14, marginBottom: 6 },
-  value: { color: '#fff', fontSize: 24, fontWeight: '700' },
+  label: { color: '#fff', fontSize: 13, fontWeight: '600', marginBottom: 8, opacity: 0.9 },
+  value: { color: '#fff', fontSize: 26, fontWeight: '700', letterSpacing: 0.5 },
   chartCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 10,
-    marginTop: 2,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#222',
-    marginBottom: 4,
-    paddingHorizontal: 8,
+    marginBottom: 10,
+    paddingHorizontal: 0,
   },
   sectionSubtitle: {
     fontSize: 13,
     color: '#666',
-    marginBottom: 6,
-    paddingHorizontal: 8,
+    marginBottom: 16,
+    paddingHorizontal: 0,
+    fontWeight: '500',
   },
   lineChart: {
     marginLeft: -8,

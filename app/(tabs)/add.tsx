@@ -1,9 +1,9 @@
+import { useAppTheme } from '@/hooks/use-app-theme';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { db } from '../../constants/firebaseConfig';
-import { useAppTheme } from '@/hooks/use-app-theme';
 
 const expenseCategories = ['Food & Dining', 'Transportation', 'Utilities & Bills', 'Shopping & Entertainment', 'Health & Fitness', 'Education', 'Other Expenses'];
 const incomeCategories = ['Salary/Wages', 'Freelance Work', 'Business Income', 'Investments', 'Gifts', 'Other Income'];
