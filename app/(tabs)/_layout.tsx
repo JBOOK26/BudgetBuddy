@@ -16,12 +16,14 @@ export default function TabLayout() {
         tabBarStyle: { backgroundColor: Colors[resolvedTheme].background },
         tabBarInactiveTintColor: Colors[resolvedTheme].tabIconDefault,
         headerShown: false,
+        tabBarShowLabel: false,
         tabBarButton: HapticTab,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
+          headerShown: false,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
@@ -29,6 +31,7 @@ export default function TabLayout() {
         name="add"
         options={{
           title: 'Add',
+          headerShown: false,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="plus.circle.fill" color={color} />,
         }}
       />
@@ -36,7 +39,22 @@ export default function TabLayout() {
         name="history"
         options={{
           title: 'History',
+          headerShown: false,
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="list.bullet.rectangle.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          headerShown: false,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="about"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

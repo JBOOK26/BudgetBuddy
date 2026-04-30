@@ -20,7 +20,7 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const chartWidth = Dimensions.get('window').width - 44;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const { resolvedTheme, toggleTheme } = useAppTheme();
+  const { resolvedTheme } = useAppTheme();
   const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
@@ -113,17 +113,6 @@ export default function DashboardScreen() {
       showsVerticalScrollIndicator={false}>
       <View style={styles.headingRow}>
         <Text style={[styles.heading, { color: isDark ? '#f4f4f4' : '#111' }]}>Budget Buddy</Text>
-        <Pressable
-          onPress={toggleTheme}
-          style={[
-            styles.toggleButton,
-            { backgroundColor: isDark ? '#2a2d31' : '#e9f0ec', borderColor: isDark ? '#3d4248' : '#d3e2da' },
-          ]}>
-          <MaterialIcons name={isDark ? 'light-mode' : 'dark-mode'} size={18} color={isDark ? '#f7d66b' : '#223'} />
-          <Text style={[styles.toggleLabel, { color: isDark ? '#f4f4f4' : '#111' }]}>
-            {isDark ? 'Light' : 'Dark'}
-          </Text>
-        </Pressable>
       </View>
       <View style={[styles.card, styles.incomeCard]}>
         <Text style={styles.label}>Income</Text>
@@ -178,21 +167,11 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingBottom: 24, gap: 12 },
   headingRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
   },
-  heading: { fontSize: 28, fontWeight: '700' },
-  toggleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  toggleLabel: { fontSize: 12, fontWeight: '700' },
+  heading: { fontSize: 28, fontWeight: '700', textAlign: 'center' },
   card: { borderRadius: 12, padding: 16 },
   incomeCard: { backgroundColor: '#4CAF50' },
   expenseCard: { backgroundColor: '#f44336' },
