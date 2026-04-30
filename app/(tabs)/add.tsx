@@ -5,7 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { db } from '../../constants/firebaseConfig';
 import { useAppTheme } from '@/hooks/use-app-theme';
 
-const categories = ['Food', 'Transport', 'Bills', 'Salary', 'Freelance', 'Shopping', 'Health', 'Other'];
+const expenseCategories = ['Food & Dining', 'Transportation', 'Utilities & Bills', 'Shopping & Entertainment', 'Health & Fitness', 'Education', 'Other Expenses'];
+const incomeCategories = ['Salary/Wages', 'Freelance Work', 'Business Income', 'Investments', 'Gifts', 'Other Income'];
 
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
@@ -13,9 +14,16 @@ export default function AddScreen() {
   const isDark = resolvedTheme === 'dark';
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('Food');
+  const [category, setCategory] = useState('Food & Dining');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const categories = type === 'expense' ? expenseCategories : incomeCategories;
+
+  const handleTypeChange = (newType: 'expense' | 'income') => {
+    setType(newType);
+    setCategory(newType === 'expense' ? expenseCategories[0] : incomeCategories[0]);
+  };
 
   const handleSubmit = async () => {
     if (!amount || Number.isNaN(Number(amount))) {
@@ -54,12 +62,12 @@ export default function AddScreen() {
       <View style={styles.typeRow}>
         <TouchableOpacity
           style={[styles.typeBtn, type === 'expense' && styles.typeBtnExpense]}
-          onPress={() => setType('expense')}>
+          onPress={() => handleTypeChange('expense')}>
           <Text style={[styles.typeText, type === 'expense' && styles.typeTextActive]}>Expense</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.typeBtn, type === 'income' && styles.typeBtnIncome]}
-          onPress={() => setType('income')}>
+          onPress={() => handleTypeChange('income')}>
           <Text style={[styles.typeText, type === 'income' && styles.typeTextActive]}>Income</Text>
         </TouchableOpacity>
       </View>
