@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LineChart, PieChart } from 'react-native-chart-kit';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { db } from '../../constants/firebaseConfig';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { useEffect, useMemo, useState } from 'react';
+import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LineChart, PieChart } from 'react-native-chart-kit';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { db } from '../../constants/firebaseConfig';
 
 const CATEGORY_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#8BC34A', '#BA68C8'];
 

@@ -62,7 +62,7 @@ function HistoryRow({
           {item.type === 'income' ? '+' : '-'} PHP {item.amount.toLocaleString()}
         </Text>
       </Pressable>
-      <Animated.View style={[styles.deleteSlotOuter, deleteSlotStyle]} pointerEvents="box-none">
+      <Animated.View style={[styles.deleteSlotOuter, deleteSlotStyle]} pointerEvents="auto">
         <View style={styles.deleteSlotInner}>
           <TouchableOpacity
             style={styles.deleteBtn}
@@ -116,8 +116,9 @@ export default function HistoryScreen() {
           try {
             await deleteDoc(doc(db, 'transactions', id));
             setDeleteRevealedId(null);
-          } catch {
-            Alert.alert('Could not delete', 'Check your connection and Firestore rules, then try again.');
+          } catch (error: any) {
+            console.error('Delete error:', error);
+            Alert.alert('Could not delete', error?.message || 'Check your connection and Firestore rules, then try again.');
           }
         },
       },
