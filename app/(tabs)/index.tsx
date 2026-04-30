@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LineChart, PieChart } from 'react-native-chart-kit';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { db } from '../../constants/firebaseConfig';
 import { useAppTheme } from '@/hooks/use-app-theme';
+import { useAuth } from '@/contexts/AuthContext';
 
 const CATEGORY_COLORS = ['#FF6384', '#36A2EB', '#FFCE56', '#8BC34A', '#BA68C8'];
 
@@ -14,6 +15,9 @@ type Transaction = {
   type: 'income' | 'expense';
   category: string;
   amount: number;
+  date?: string;
+  userId?: string;
+  createdAt?: any;
 };
 
 export default function DashboardScreen() {
@@ -21,10 +25,17 @@ export default function DashboardScreen() {
   const chartWidth = Dimensions.get('window').width - 44;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { resolvedTheme } = useAppTheme();
+  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
-    const transactionsQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+    if (!user?.uid) return;
+    
+    const transactionsQuery = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
       const data = snapshot.docs.map((item) => {
         const docData = item.data() as Omit<Transaction, 'id'>;
@@ -37,7 +48,7 @@ export default function DashboardScreen() {
     });
 
     return unsubscribe;
-  }, []);
+  }, [user?.uid]);
 
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
@@ -83,11 +94,39 @@ export default function DashboardScreen() {
     return values;
   }, [expenseByCategory]);
 
+  const weeklyTrendData = useMemo(() => {
+    const now = new Date();
+    const weeks = [3, 2, 1, 0];
+    const weeklyExpenses: number[] = [];
+    
+    weeks.forEach((weeksAgo) => {
+      const weekStart = new Date(now);
+      weekStart.setDate(weekStart.getDate() - (weekStart.getDay() || 7) - weeksAgo * 7);
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      weekEnd.setHours(23, 59, 59, 999);
+      
+      const weekExpenses = transactions
+        .filter((t) => {
+          if (t.type !== 'expense' || !t.date) return false;
+          const transDate = new Date(t.date);
+          return transDate >= weekStart && transDate <= weekEnd;
+        })
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      weeklyExpenses.push(weekExpenses);
+    });
+    
+    return weeklyExpenses;
+  }, [transactions]);
+
   const trendData = {
     labels: ['W1', 'W2', 'W3', 'W4'],
     datasets: [
       {
-        data: [900, 1200, 1100, totalExpenses],
+        data: weeklyTrendData,
         color: (opacity = 1) => `rgba(33, 150, 243, ${opacity})`,
         strokeWidth: 3,
       },
