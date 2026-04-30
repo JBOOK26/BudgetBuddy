@@ -100,7 +100,9 @@ export default function DashboardScreen() {
       const weekExpenses = transactions
         .filter((t) => {
           if (t.type !== 'expense' || !t.date) return false;
-          const transDate = new Date(t.date);
+          // Parse date correctly in local timezone, not UTC
+          const [year, month, day] = t.date.split('-').map(Number);
+          const transDate = new Date(year, month - 1, day, 0, 0, 0);
           return transDate >= weekStart && transDate <= weekEnd;
         })
         .reduce((sum, t) => sum + t.amount, 0);
