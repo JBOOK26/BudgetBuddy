@@ -1,3 +1,4 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useState } from 'react';
@@ -11,6 +12,7 @@ const incomeCategories = ['Salary/Wages', 'Freelance Work', 'Business Income', '
 export default function AddScreen() {
   const insets = useSafeAreaInsets();
   const { resolvedTheme } = useAppTheme();
+  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
   const [type, setType] = useState<'expense' | 'income'>('expense');
   const [amount, setAmount] = useState('');
@@ -40,6 +42,7 @@ export default function AddScreen() {
         description: description.trim(),
         date: new Date().toISOString().split('T')[0],
         createdAt: serverTimestamp(),
+        userId: user?.uid,
       });
 
       Alert.alert('Saved', `${type} - PHP ${amount} - ${category}`);

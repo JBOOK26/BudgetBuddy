@@ -1,6 +1,7 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -80,13 +81,20 @@ function HistoryRow({
 export default function HistoryScreen() {
   const insets = useSafeAreaInsets();
   const { resolvedTheme } = useAppTheme();
+  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [deleteRevealedId, setDeleteRevealedId] = useState<string | null>(null);
 
   useEffect(() => {
-    const transactionsQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+    if (!user?.uid) return;
+    
+    const transactionsQuery = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
       const data = snapshot.docs.map((item) => {
         const docData = item.data() as Omit<Transaction, 'id'>;
@@ -99,7 +107,7 @@ export default function HistoryScreen() {
     });
 
     return unsubscribe;
-  }, []);
+  }, [user?.uid]);
 
   const filtered = useMemo(
     () => (filter === 'all' ? transactions : transactions.filter((t) => t.type === filter)),

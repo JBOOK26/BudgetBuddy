@@ -1,5 +1,6 @@
+import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
@@ -21,10 +22,17 @@ export default function DashboardScreen() {
   const chartWidth = Dimensions.get('window').width - 44;
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const { resolvedTheme } = useAppTheme();
+  const { user } = useAuth();
   const isDark = resolvedTheme === 'dark';
 
   useEffect(() => {
-    const transactionsQuery = query(collection(db, 'transactions'), orderBy('createdAt', 'desc'));
+    if (!user?.uid) return;
+    
+    const transactionsQuery = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     const unsubscribe = onSnapshot(transactionsQuery, (snapshot) => {
       const data = snapshot.docs.map((item) => {
         const docData = item.data() as Omit<Transaction, 'id'>;
@@ -37,7 +45,7 @@ export default function DashboardScreen() {
     });
 
     return unsubscribe;
-  }, []);
+  }, [user?.uid]);
 
   const totalIncome = transactions
     .filter((t) => t.type === 'income')
