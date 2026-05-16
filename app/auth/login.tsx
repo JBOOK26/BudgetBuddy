@@ -1,3 +1,4 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getFirebaseErrorMessage } from '@/lib/firebaseErrors';
@@ -5,7 +6,7 @@ import { validateEmail } from '@/lib/validation';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -19,7 +20,7 @@ import {
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { resolvedTheme } = useAppTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -29,6 +30,8 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [userName, setUserName] = useState('');
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -52,13 +55,14 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await login(email, password);
-      // Navigation will happen automatically via auth state change
+      const result = await login(email, password);
+      const displayName = result?.displayName?.trim() || email.split('@')[0] || 'User';
+      setUserName(displayName);
+      setShowWelcomeModal(true);
     } catch (error: any) {
+      setLoading(false);
       const errorMessage = getFirebaseErrorMessage(error.code);
       Alert.alert('Login Failed', errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -195,6 +199,20 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </View>
+
+      <ConfirmationModal
+        visible={showWelcomeModal}
+        title={`Welcome, ${userName}!`}
+        message="You've successfully logged in to Budget Buddy"
+        confirmText="Continue"
+        confirmColor="#1ec446"
+        isDark={isDark}
+        onCancel={() => setShowWelcomeModal(false)}
+        onConfirm={() => {
+          setShowWelcomeModal(false);
+          setLoading(false);
+        }}
+      />
     </ScrollView>
   );
 }

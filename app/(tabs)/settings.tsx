@@ -1,7 +1,9 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,12 +14,24 @@ export default function SettingsScreen() {
   const { user, logout } = useAuth();
   const isDark = resolvedTheme === 'dark';
   const profileName = user?.displayName?.trim() || user?.email?.split('@')[0] || 'User';
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
 
-  const handleLogout = async () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
+      setShowLogoutModal(false);
+      setShowLogoutSuccess(true);
     } catch (error) {
       console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -86,11 +100,35 @@ export default function SettingsScreen() {
       <Text style={[styles.sectionTitle, { color: isDark ? '#aaa' : '#666' }]}>Account</Text>
       <Pressable
         style={[styles.logoutButton]}
-        onPress={handleLogout}
+        onPress={handleLogoutClick}
       >
         <MaterialIcons name="logout" size={24} color="#fff" />
         <Text style={styles.logoutText}>LOGOUT</Text>
       </Pressable>
+
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Logout?"
+        message="Are you sure you want to logout from Budget Buddy?"
+        cancelText="Cancel"
+        confirmText="Logout"
+        confirmColor="#f44336"
+        isDark={isDark}
+        isLoading={isLoggingOut}
+        onCancel={() => setShowLogoutModal(false)}
+        onConfirm={handleLogoutConfirm}
+      />
+
+      <ConfirmationModal
+        visible={showLogoutSuccess}
+        title="Logged Out"
+        message="See you next time!"
+        confirmText="OK"
+        confirmColor="#1ec446"
+        isDark={isDark}
+        onCancel={() => setShowLogoutSuccess(false)}
+        onConfirm={() => setShowLogoutSuccess(false)}
+      />
     </ScrollView>
   );
 }

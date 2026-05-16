@@ -13,8 +13,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string, name: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  signup: (email: string, password: string, name: string) => Promise<User>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
@@ -40,7 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       setError(null);
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return userCredential.user;
     } catch (err: any) {
       const errorCode = err.code || 'auth/unknown-error';
       setError(errorCode);
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name.trim() });
+      return userCredential.user;
     } catch (err: any) {
       const errorCode = err.code || 'auth/unknown-error';
       setError(errorCode);

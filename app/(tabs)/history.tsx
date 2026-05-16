@@ -1,3 +1,4 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
@@ -86,6 +87,9 @@ export default function HistoryScreen() {
   const [filter, setFilter] = useState<'all' | 'income' | 'expense'>('all');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [deleteRevealedId, setDeleteRevealedId] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -115,22 +119,25 @@ export default function HistoryScreen() {
   );
 
   const confirmDelete = (id: string) => {
-    Alert.alert('Delete transaction', 'Remove this entry from your history? This cannot be undone.', [
-      { text: 'Cancel', style: 'cancel', onPress: () => setDeleteRevealedId(null) },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteDoc(doc(db, 'transactions', id));
-            setDeleteRevealedId(null);
-          } catch (error: any) {
-            console.error('Delete error:', error);
-            Alert.alert('Could not delete', error?.message || 'Check your connection and Firestore rules, then try again.');
-          }
-        },
-      },
-    ]);
+    setPendingDeleteId(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDeleteId) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteDoc(doc(db, 'transactions', pendingDeleteId));
+      setShowDeleteModal(false);
+      setPendingDeleteId(null);
+      setDeleteRevealedId(null);
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      Alert.alert('Could not delete', error?.message || 'Check your connection and Firestore rules, then try again.');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -180,6 +187,23 @@ export default function HistoryScreen() {
             onRequestDelete={() => confirmDelete(item.id)}
           />
         )}
+      />
+
+      <ConfirmationModal
+        visible={showDeleteModal}
+        title="Delete Transaction?"
+        message="Remove this entry from your history? This cannot be undone."
+        cancelText="Cancel"
+        confirmText="Delete"
+        confirmColor="#f44336"
+        isDark={isDark}
+        isLoading={isDeleting}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setPendingDeleteId(null);
+          setDeleteRevealedId(null);
+        }}
+        onConfirm={handleDeleteConfirm}
       />
     </View>
   );

@@ -1,3 +1,4 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -19,6 +20,8 @@ export default function AddScreen() {
   const [category, setCategory] = useState('Food & Dining');
   const [description, setDescription] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastSavedTransaction, setLastSavedTransaction] = useState<{ type: string; amount: string; category: string } | null>(null);
 
   const categories = type === 'expense' ? expenseCategories : incomeCategories;
 
@@ -45,7 +48,8 @@ export default function AddScreen() {
         userId: user?.uid,
       });
 
-      Alert.alert('Saved', `${type} - PHP ${amount} - ${category}`);
+      setLastSavedTransaction({ type, amount, category });
+      setShowSuccessModal(true);
       setAmount('');
       setDescription('');
     } catch {
@@ -135,6 +139,21 @@ export default function AddScreen() {
         onPress={handleSubmit}>
         <Text style={styles.submitText}>{saving ? 'Saving...' : 'Save Transaction'}</Text>
       </TouchableOpacity>
+
+      <ConfirmationModal
+        visible={showSuccessModal}
+        title="Transaction Added!"
+        message={
+          lastSavedTransaction
+            ? `${lastSavedTransaction.type.charAt(0).toUpperCase() + lastSavedTransaction.type.slice(1)} - PHP ${lastSavedTransaction.amount} - ${lastSavedTransaction.category}`
+            : ''
+        }
+        confirmText="Done"
+        confirmColor={lastSavedTransaction?.type === 'income' ? '#4CAF50' : '#f44336'}
+        isDark={isDark}
+        onCancel={() => setShowSuccessModal(false)}
+        onConfirm={() => setShowSuccessModal(false)}
+      />
     </ScrollView>
   );
 }

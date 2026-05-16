@@ -1,3 +1,4 @@
+import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppTheme } from '@/hooks/use-app-theme';
 import { getFirebaseErrorMessage } from '@/lib/firebaseErrors';
@@ -10,7 +11,7 @@ import {
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -24,7 +25,7 @@ import {
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { signup } = useAuth();
+  const { signup, user } = useAuth();
   const { resolvedTheme } = useAppTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -41,6 +42,8 @@ export default function SignupScreen() {
     password?: string;
     confirmPassword?: string;
   }>({});
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [userName, setUserName] = useState('');
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -79,13 +82,14 @@ export default function SignupScreen() {
 
     setLoading(true);
     try {
-      await signup(email, password, name);
-      // Navigation will happen automatically via auth state change
+      const result = await signup(email, password, name);
+      const displayName = result?.displayName?.trim() || name.trim() || email.split('@')[0] || 'User';
+      setUserName(displayName);
+      setShowWelcomeModal(true);
     } catch (error: any) {
+      setLoading(false);
       const errorMessage = getFirebaseErrorMessage(error.code);
       Alert.alert('Signup Failed', errorMessage);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -255,6 +259,20 @@ export default function SignupScreen() {
           </Pressable>
         </View>
       </View>
+
+      <ConfirmationModal
+        visible={showWelcomeModal}
+        title={`Welcome, ${userName}!`}
+        message={`🎉 Your account has been created successfully!\n\nLet's start managing your finances together!`}
+        confirmText="Get Started"
+        confirmColor="#1ec446"
+        isDark={isDark}
+        onCancel={() => setShowWelcomeModal(false)}
+        onConfirm={() => {
+          setShowWelcomeModal(false);
+          setLoading(false);
+        }}
+      />
     </ScrollView>
   );
 }
